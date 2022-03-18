@@ -3,14 +3,20 @@
 aws-cli-auth is cli tool for authentication an AWS IAM User with MFA to assume a role when using AWS CLI on your machine.
 
 ## How to use
-1. Create a `config.yaml` file in /config folder
+1. Configure AWS iam user(s) and role(s) according to aws best practices
+1. clone this repo and create a `config.yaml` file in `/config` folder
 1. Inside the `config.yaml` file, add the following:
     ```yaml
+    User:
+      AccKeyId: "<IAM USER ACCESS KEY ID>"
+      SecAccKey: "<IAM USER SECRET ACCESS KEY>"
     DefaultRegion: "<AWS REGION>"
     MFASerial: "<MFA SERIAL ARN>"
     RoleArn: "<ROLE-ARN>"
     SessionName: "<SESSION-NAME>"
     ```
+1. run `go build aws-mfa-auth.go`
+
 
 ## AWS IAM user and role creation
 
@@ -39,3 +45,10 @@ In keeping with these security practices, I recommend:
         ]
     }
     ```
+
+
+## Upcoming feature
+I have a few ideas on how to improve this tool
+- Support for different OSes, havent tested it on a Windows system yet
+- Ability to support multiple `config.yaml`
+- Use cobra to create a robust cli

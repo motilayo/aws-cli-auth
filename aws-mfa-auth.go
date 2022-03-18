@@ -1,53 +1,66 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"context"
 	"fmt"
 	"log"
-	"os/exec"
+	"os"
+
+	// "os"
+	// "os/exec"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
 	"github.com/spf13/viper"
 
-	c "aws-cli-auth/config"
+	c "config"
 )
 
-func execCmd(val string) {
-	cmd := exec.Command("eval", val)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout // standard output
-	cmd.Stderr = &stderr // standard error
-	err := cmd.Run()
-	outStr, errStr := stdout.String(), stderr.String()
-
-	fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
+func createFile(fileName string, fileData string) {
+	dirname, err := os.UserHomeDir()
+    if err != nil {
+        log.Fatal( err )
+    }
+	credentialsFile, err := os.Create(dirname + "/.aws/" + fileName)
 	if err != nil {
-		log.Fatalf("cmd.Run() failed with %s\n", err)
+		log.Fatal(err)
+	}
+
+	_, err = credentialsFile.WriteString(fileData)
+	if err != nil {
+		credentialsFile.Close()
+		log.Fatal(err)
+	}
+
+	err = credentialsFile.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
 func main() {
 
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config/")
 	viper.SetConfigType("yml")
 	var configuration c.Configurations
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file, %s", err)
+		log.Printf("Error reading config file, %s", err)
 	}
 
 	err := viper.Unmarshal(&configuration)
 	if err != nil {
-		fmt.Printf("Unable to decode into struct, %v", err)
+		log.Printf("Unable to decode into struct, %v", err)
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(configuration.DefaultRegion))
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(configuration.DefaultRegion),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(configuration.User.AccKeyId, configuration.User.SecAccKey, "")))
 	if err != nil {
 		panic(err)
 	}
@@ -64,18 +77,22 @@ func main() {
 	}
 	result, err := client.AssumeRole(context.TODO(), input)
 	if err != nil {
-		fmt.Println("Got an error assuming the role:")
-		fmt.Println(err)
+		log.Println("Got an error assuming the role:")
+		log.Fatal(err)
 		return
 	}
 
-	exportAccKey := fmt.Sprintf(`"AWS_ACCESS_KEY_ID=%s"`, *result.Credentials.AccessKeyId)
-	exportSecKey := fmt.Sprintf(`"AWS_SECRET_ACCESS_KEY=%s"`, *result.Credentials.SecretAccessKey)
-	exportDefaultReg := fmt.Sprintf(`"AWS_DEFAULT_REGION=%s"`, configuration.DefaultRegion)
-	exportSessTkn := fmt.Sprintf(`"AWS_SESSION_TOKEN=%s"`, *result.Credentials.SessionToken)
+	profileName := fmt.Sprintln("[default]")
+	AccKey := fmt.Sprintln("aws_access_key_id", "=", *result.Credentials.AccessKeyId)
+	SecKey := fmt.Sprintln("aws_secret_access_key", "=", *result.Credentials.SecretAccessKey)
+	DefaultReg := fmt.Sprintln("region", "=", configuration.DefaultRegion)
+	SessTkn := fmt.Sprintln("aws_session_token", "=", *result.Credentials.SessionToken)
 
-	execCmd(exportAccKey)
-	execCmd(exportSecKey)
-	execCmd(exportDefaultReg)
-	execCmd(exportSessTkn)
+	credFileData := fmt.Sprintf("%s%s%s%s", profileName, AccKey, SecKey, SessTkn)
+	createFile("credentials", credFileData)
+
+	configFileData := fmt.Sprintf("%s%s", profileName, DefaultReg)
+	createFile("config", configFileData)
+
+	log.Println("Temp credentials created")
 }
