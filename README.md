@@ -4,9 +4,10 @@ aws-cli-auth is cli tool for authentication an AWS IAM User with MFA to assume a
 
 ## How to use
 1. Configure AWS iam user(s) and role(s) according to aws best practices
-1. clone this repo and create a `config.yaml` file in `/config` folder
-1. Inside the `config.yaml` file, add the following:
-    ```yaml
+1. clone this repo and create a config file, file type can be `json`, `yaml` or `toml`
+1. The `config` file should look like this:
+    #### **`config.yaml`**
+    ```yaml 
     User:
       AccKeyId: "<IAM USER ACCESS KEY ID>"
       SecAccKey: "<IAM USER SECRET ACCESS KEY>"
@@ -15,7 +16,36 @@ aws-cli-auth is cli tool for authentication an AWS IAM User with MFA to assume a
     RoleArn: "<ROLE-ARN>"
     SessionName: "<SESSION-NAME>"
     ```
-1. run `go build aws-mfa-auth.go`
+
+    #### **`config.toml`**
+    ```toml
+    DefaultRegion = "<AWS REGION>"
+    MFASerial = "<MFA SERIAL ARN>"
+    RoleArn = "<AWS REGION>"
+    SessionName = "<SESSION-NAME>"
+
+    [User]
+    AccKeyId = "<IAM USER ACCESS KEY ID>"
+    SecAccKey = "<IAM USER SECRET ACCESS KEY>"
+    ```
+
+    #### **`config.json`**
+    ```json
+    {
+        "DefaultRegion": "<AWS REGION>",
+        "MFASerial": "<MFA SERIAL ARN>",
+        "RoleArn": "<AWS REGION>",
+        "SessionName": "<SESSION-NAME>",
+        "User":{
+            "AccKeyId": "<IAM USER ACCESS KEY ID>",
+            "SecAccKey": "<IAM USER SECRET ACCESS KEY>"
+        }
+    }
+    ```
+
+1. run `go build .`
+1. run `./aws-cli-auth -h` to see the help
+1. run `./aws-cli-auth --config=config.[yaml|toml|json]` to request temporary AWS credentials
 
 
 ## AWS IAM user and role creation
@@ -48,7 +78,4 @@ In keeping with these security practices, I recommend:
 
 
 ## Upcoming feature
-I have a few ideas on how to improve this tool
-- Support for different OSes, havent tested it on a Windows system yet
-- Ability to support multiple `config.yaml`
-- Use cobra to create a robust cli
+- beautification
