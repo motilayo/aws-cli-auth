@@ -24,8 +24,7 @@ var (
 
 			if configFilePath == "" {
 				err:= fmt.Errorf("Config file missing. Please provide a config file")
-				log.Fatal(err)
-				os.Exit(1)
+				log.Fatalln(err)
 			} else {
 				config.Configure(configFilePath)
 			}
