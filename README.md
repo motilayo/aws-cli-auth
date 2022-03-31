@@ -45,7 +45,7 @@ aws-cli-auth is cli tool for authentication an AWS IAM User with MFA to assume a
 
 1. run `go build .`
 1. run `./aws-cli-auth -h` to see the help
-1. run `./aws-cli-auth --config=config.[yaml|toml|json]` to request temporary AWS credentials
+1. run `./aws-cli-auth --config=[path/]config.[yaml|toml|json]` to request temporary AWS credentials
 
 
 ## AWS IAM user and role creation
